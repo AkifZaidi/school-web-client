@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UploadCloud, FileVideo, Trash2 } from "lucide-react";
+import axios from "axios"; // ✅ Backend se connect karne ke liye axios use karein
 
 const UploadRecordedLectures = () => {
     const [selectedVideo, setSelectedVideo] = useState(null);
     const [previewUrl, setPreviewUrl] = useState("");
+    const [uploading, setUploading] = useState(false);
     const navigate = useNavigate();
 
     // Handle File Selection
@@ -27,16 +29,34 @@ const UploadRecordedLectures = () => {
         setPreviewUrl("");
     };
 
-    // Handle Upload
-    const handleUpload = () => {
-        if (selectedVideo) {
-            // Save video URL to localStorage
-            const savedVideos = JSON.parse(localStorage.getItem("uploadedLectures")) || [];
-            savedVideos.push(previewUrl);
-            localStorage.setItem("uploadedLectures", JSON.stringify(savedVideos));
+    // Handle Upload (Send Video to Backend)
+    const handleUpload = async () => {
+        if (!selectedVideo) {
+            alert("No video selected!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("video", selectedVideo);
+
+        try {
+            setUploading(true);
+
+            const response = await axios.post(
+                "http://localhost:5000/recordedLectures/upload", // ✅ Your backend API URL
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
 
             alert("Lecture Uploaded Successfully!");
             navigate("/recorded-lectures"); // Redirect to Recorded Lectures page
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Failed to upload video!");
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -87,10 +107,11 @@ const UploadRecordedLectures = () => {
             {/* Upload Button */}
             {selectedVideo && (
                 <button
-                    className="mt-4 w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600"
+                    className={`mt-4 w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
                     onClick={handleUpload}
+                    disabled={uploading}
                 >
-                    Upload Lecture
+                    {uploading ? "Uploading..." : "Upload Lecture"}
                 </button>
             )}
         </motion.div>

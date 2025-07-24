@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-// import './Register.css';  // If you want to include any custom styles
+import React, { useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { gsap } from 'gsap';
+import { UserDataContext } from '../../context/UserContext';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -9,8 +9,17 @@ function Register() {
     email: '',
     password: '',
   });
-  
+
+  const [errors, setErrors] = useState([]);  // 🔹 State for validation errors
+  const { user, setUser } = useContext(UserDataContext);
   const navigate = useNavigate();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -19,22 +28,52 @@ function Register() {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData); // Registration logic here
-    navigate('/login');  // Redirect to login page after successful registration
+    setErrors([]);  // 🔹 Reset errors before submitting
+
+    try {
+      const response = await axios.post('http://localhost:5000/users/register', formData, {
+        withCredentials: true
+      });
+
+      if (response.status === 201) {
+        console.log(response.data);
+        const data = response.data;
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        navigate('/');
+      }
+
+    } catch (error) {
+      console.log(error);
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors); // Array of errors
+      } else if (error.response?.data?.message) {
+        setErrors([{ msg: error.response.data.message }]); // Convert to array
+      } else {
+        setErrors([{ msg: "Something went wrong!" }]); // Generic error
+      }
+    }
+    setFormData({ username: '', email: '', password: '' });
   };
 
-  // GSAP Animation on component mount
-  React.useEffect(() => {
-    gsap.from('.register-form', { opacity: 0, y: -150, duration: 1, delay: 0.2 });
-    gsap.from('.form-title', { opacity: 0, x: -50, duration: 1, delay: 0.4 });
-  }, []);
-
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
+    <div className="flex flex-col justify-center items-center min-h-screen p-4">
+        {/* 🔹 Validation Errors Display */}
+        {errors.length > 0 && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4  w-full max-w-lg">
+            <ul>
+              {errors.map((error, index) => (
+                <li key={index} className="text-xl">{error.msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       <div className="register-form p-8 rounded-lg shadow-xl w-full max-w-lg">
         <h2 className="form-title text-3xl font-bold text-gray-800 text-center mb-8">Create an Account</h2>
+        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="form-group">
             <input

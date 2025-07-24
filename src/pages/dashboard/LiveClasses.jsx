@@ -1,24 +1,48 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { PlayCircle, StopCircle, Video, Link as LinkIcon, Copy } from "lucide-react";
+import axios from "axios";
 
 const ChemistryLiveClass = () => {
     const [classStatus, setClassStatus] = useState("Not Started");
     const [meetLink, setMeetLink] = useState("");
 
     // Start Class
-    const startClass = () => {
+    const startClass = async () => {
         if (!meetLink.trim()) {
             alert("Please enter a valid Google Meet link!");
             return;
         }
-        setClassStatus("Live");
+
+        try {
+            const response = await axios.post("http://localhost:5000/liveClasses/class", { meetLink });
+
+            console.log("Start Class Response:", response.data); // Debugging line
+
+            if (response.data.meetLink) {
+                setMeetLink(response.data.meetLink);
+                setClassStatus("Live");
+            } else {
+                alert("Failed to start class. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error starting class:", error);
+            alert("Error starting class. Check console for details.");
+        }
     };
 
+
     // End Class (Resets Everything)
-    const endClass = () => {
-        setClassStatus("Not Started");
-        setMeetLink("");
+    const endClass = async () => {
+        try {
+            const response = await axios.delete("http://localhost:5000/liveClasses/deleteClass", { meetLink });
+            console.log("End Class Response:", response.data); // Debugging line
+            setClassStatus("Not Started");
+            setMeetLink("");
+        } catch (error) {
+            console.error("Error starting class:", error);
+            alert("Error starting class. Check console for details.")
+        };
     };
 
     // Copy Meet Link
@@ -48,6 +72,7 @@ const ChemistryLiveClass = () => {
                     <h3 className="text-lg font-semibold mb-2">Start Live Class</h3>
                     <input
                         type="text"
+                        name="meetLink"
                         placeholder="Enter Google Meet Link"
                         value={meetLink}
                         onChange={(e) => setMeetLink(e.target.value)}
@@ -76,11 +101,10 @@ const ChemistryLiveClass = () => {
                     <div className="flex items-center gap-2 mt-3">
                         <a
                             href={meetLink}
-                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline flex items-center gap-1"
                         >
-                            <LinkIcon size={16} /> Join Class
+                            <LinkIcon size={16} /> {meetLink}
                         </a>
                         <button onClick={copyLink} className="text-gray-400 hover:text-gray-600">
                             <Copy size={16} />

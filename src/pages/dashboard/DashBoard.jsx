@@ -1,23 +1,61 @@
 import React, { useState, useEffect } from "react";
 import {
     HomeIcon, Users2, Video, BarChart2Icon, Book, Bell, Settings2, LogOut, Edit, Trash2, UserPlus,
+    MenuIcon,
+    SidebarClose,
+    SidebarCloseIcon,
+    SquareX
 } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import LiveClasses from "./LiveClasses";
 import RecordedLectures from "./RecordedLectures";
+import { UserDataContext } from "../../context/UserContext";
 
 const Dashboard = () => {
     const [activeTab, setActiveTab] = useState("dashboard");
+    const [sidebar, setSidebar] = useState(true);  // ✅ New state
     const [users, setUsers] = useState([]);
-    const [stats, setStats] = useState({ users: 0, sessions: 0, revenue: 0 });
+    const [links, setLinks] = useState([]);
+    const [sessions, setSessions] = useState(0);
+    const navigate = useNavigate();
+    const { user, setUser } = React.useContext(UserDataContext);
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
-        setUsers([
-            { id: 1, name: "Ali Ahmed", role: "Student", email: "ali@example.com" },
-            { id: 2, name: "Fatima Noor", role: "Teacher", email: "fatima@example.com" },
-            { id: 3, name: "Zain Malik", role: "Admin", email: "zain@example.com" },
-        ]);
-        setStats({ users: 1250, sessions: 300, revenue: 12500 });
+        const fetchUsers = async () => {
+            try {
+                const response = await axios.get("http://localhost:5000/users/all-users", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                console.log("Fetched Users:", response.data); // ✅ Debugging
+
+                setUsers(response.data.users || []); // ✅ Ensure array format
+                setLinks(response.data.links || []); // ✅ Ensure array format
+            } catch (error) {
+                console.error("Error fetching users:", error);
+                setUsers([]); // ✅ Default empty array on error
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    useEffect(() => {
+        const fetchSessions = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/stats/sessions'); // 🔹 Backend API call
+                setSessions(response.data.sessions);  // 🔹 Store in state
+            } catch (error) {
+                console.error("Error fetching active sessions:", error);
+            }
+        };
+
+        fetchSessions();
     }, []);
 
     const menuItems = [
@@ -27,47 +65,86 @@ const Dashboard = () => {
         { id: "lectures", name: "Recorded Lectures", icon: <Book size={20} /> },
     ];
 
-    const handleEdit = (id) => {
-        alert(`Edit user with ID: ${id}`);
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+        try {
+            await axios.delete(`http://localhost:5000/users/delete/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            // ✅ Remove user from UI after successful backend deletion
+            setUsers(users.filter(user => user._id !== id));
+
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user. Please try again.");
+        }
     };
 
-    const handleDelete = (id) => {
-        setUsers(users.filter(user => user.id !== id));
-    };
+    const userLogoutHandler = () => {
+        const token = localStorage.getItem('token');
+        axios.get("http://localhost:5000/users/logout", {
+            withCredentials: true,
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then((response) => {
+            if (response.status === 200) {
+                localStorage.removeItem('token')
+                setUser(null);
+                navigate("/");
+            }
+
+        }).catch(error => {
+            console.error("Logout failed", error);
+        });
+        // localStorage.removeItem('token');
+        // navigate('/');
+    }
+
+    const menuToggle = () => {
+        setSidebar(!sidebar);
+    }
 
     return (
         <div className="flex h-screen bg-gray-100">
-            <motion.aside initial={{ x: -200 }} animate={{ x: 0 }} transition={{ type: "spring", stiffness: 100 }} className="w-64 bg-white shadow-lg p-5 flex flex-col justify-between">
+            <motion.aside initial={{ x: -200 }} animate={{ x: 0 }} transition={{ type: "spring", stiffness: 100 }} className={`${sidebar ? 'w-64' : 'w-16'} bg-white shadow-lg p-3 flex flex-col justify-between`}>
                 <div>
-                    <h2 className="text-2xl font-bold text-red-600">Admin Dashboard</h2>
+                    <div className="flex items-center justify-between -gap-10 mb-10">
+                        <h2 className={`${sidebar ? 'block' : 'hidden'} text-2xl font-bold text-red-600`}>Admin Dashboard</h2>
+                        <MenuIcon size={30} className={`${!sidebar ? 'block' : 'hidden'}  text-red-600 cursor-pointer mt-5 ml-1.5`} onClick={menuToggle} />
+                        <SquareX size={30} className={`${!sidebar ? 'hidden' : 'block'}  text-red-600 cursor-pointer mt-5`} onClick={menuToggle} />
+                    </div>
                     <nav className="mt-10">
                         <ul className="space-y-4">
                             {menuItems.map((item) => (
                                 <li key={item.id} className={`flex items-center gap-3 p-2 text-gray-700 rounded-md cursor-pointer ${activeTab === item.id ? "text-red-300" : "hover:bg-red-100"}`} onClick={() => setActiveTab(item.id)}>
-                                    {item.icon} {item.name}
+                                    <span>
+                                        {item.icon}
+                                    </span>
+                                    <span className={`${sidebar ? 'block' : 'hidden'}`}>
+                                        {item.name}
+                                    </span>
                                 </li>
                             ))}
                         </ul>
                     </nav>
                 </div>
-                <button className="w-full flex items-center gap-3 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600" onClick={() => alert("Logging out...")}> <LogOut size={20} /> Logout </button>
+                <button className={`w-full flex items-center gap-3 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600`} onClick={userLogoutHandler}> <LogOut size={20} /> <span className={`${sidebar ? 'block' : 'hidden'}`}>Logout</span> </button>
             </motion.aside>
 
             <main className="flex-1 p-6">
                 <h1 className="text-3xl font-bold text-gray-800 mb-4">Admin Panel</h1>
                 {activeTab === "dashboard" ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <motion.div className="p-5 bg-white shadow-md rounded-lg" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                             <h3 className="text-xl font-semibold text-gray-700">Total Users</h3>
-                            <p className="text-2xl font-bold text-purple-500">{stats.users}</p>
+                            <p className="text-2xl font-bold text-purple-500">{users.length}</p>
                         </motion.div>
                         <motion.div className="p-5 bg-white shadow-md rounded-lg" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                             <h3 className="text-xl font-semibold text-gray-700">Active Sessions</h3>
-                            <p className="text-2xl font-bold text-green-500">{stats.sessions}</p>
-                        </motion.div>
-                        <motion.div className="p-5 bg-white shadow-md rounded-lg" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-                            <h3 className="text-xl font-semibold text-gray-700">Revenue</h3>
-                            <p className="text-2xl font-bold text-blue-500">${stats.revenue}</p>
+                            <p className="text-2xl font-bold text-green-500">{links.length}</p>
                         </motion.div>
                     </div>
                 ) : activeTab === "users" ? (
@@ -89,36 +166,24 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <AnimatePresence>
-                                        {users.map((user) => (
-                                            <motion.tr
-                                                key={user.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -20 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="border-b hover:bg-gray-100 transition duration-200"
-                                            >
-                                                <td className="p-3">{user.name}</td>
+                                    {users.length > 0 ? (
+                                        users.map((user) => (
+                                            <tr key={user._id} className="border-b hover:bg-gray-100">
+                                                <td className="p-3">{user.username || "N/A"}</td>
                                                 <td className="p-3">{user.email}</td>
-                                                <td className="p-3">{user.role}</td>
+                                                <td className="p-3">{user.role || "User"}</td>
                                                 <td className="p-3 flex justify-center gap-3">
-                                                    <button
-                                                        onClick={() => handleEdit(user.id)}
-                                                        className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition"
-                                                    >
-                                                        <Edit size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(user.id)}
-                                                        className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition"
-                                                    >
+                                                    <button onClick={() => handleDelete(user._id)} className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </td>
-                                            </motion.tr>
-                                        ))}
-                                    </AnimatePresence>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="text-center p-4 text-gray-500">No users found.</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
