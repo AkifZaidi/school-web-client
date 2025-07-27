@@ -25,10 +25,16 @@ const ChemistryLiveClass = () => {
             } else {
                 alert(response.data.message || "Class started successfully!");
             }
-        } catch (error) {
-            console.error("Error starting class:", error);
-            alert("Error starting class. Check console for details.");
+        }catch (error) {
+        console.error("Error starting class:", error);
+
+        // ✅ Show specific backend error if exists
+        if (error.response && error.response.data && error.response.data.message) {
+            alert(`Failed to start class: ${error.response.data.message}`);
+        } else {
+            alert("Error starting class. Please check your connection or try again.");
         }
+    }
     };
 
     // End Class (Resets Everything)
