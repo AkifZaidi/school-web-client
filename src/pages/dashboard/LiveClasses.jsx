@@ -17,13 +17,13 @@ const ChemistryLiveClass = () => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/liveClasses/class`, { meetLink });
 
-            console.log("Start Class Response:", response.data); // Debugging line
+            console.log("Start Class Response:", response.data.message); // Debugging line
 
             if (response.data.meetLink) {
                 setMeetLink(response.data.meetLink);
                 setClassStatus("Live");
             } else {
-                alert("Failed to start class. Please try again.");
+                alert(response.data.message || "Class started successfully!");
             }
         } catch (error) {
             console.error("Error starting class:", error);
