@@ -10,7 +10,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const userLogoutHandler = () => {
-    axios.get("http://localhost:5000/users/logout", {
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/logout`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${token}`

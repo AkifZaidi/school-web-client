@@ -33,7 +33,7 @@ function Register() {
     setErrors([]);  // 🔹 Reset errors before submitting
 
     try {
-      const response = await axios.post('http://localhost:5000/users/register', formData, {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/users/register`, formData, {
         withCredentials: true
       });
 

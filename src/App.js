@@ -125,7 +125,7 @@ function App() {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      axios.get('http://localhost:5000/users/profile')
+      axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/profile`)
         .then(response => {
           setUser(response.data.user);
           console.log("User Profile:", response.data.user);
@@ -160,7 +160,7 @@ function App() {
         <Routes>
           <Route path="/" element={<>
             <header className="text-center py-16 bg-gradient-to-r from-red-500 to-orange-400 text-white">
-              <h1 className="text-4xl font-bold mt-4">Welcome to <span className="text-yellow-300">{user?.username || 'Username'}</span></h1>
+              <h1 className="text-4xl font-bold mt-4">Welcome to <span className="text-yellow-300">{user?.username || 'Online Academy'}</span></h1>
               <p className="text-xl mt-2">Your Gateway to Quality Online Education</p>
             </header>
             <Hero />

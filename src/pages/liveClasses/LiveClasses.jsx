@@ -61,8 +61,9 @@ const LiveClasses = () => {
     useEffect(() => {
         const fetchMeetingLink = async () => {
             try {
-                const response = await fetch("http://localhost:5000/liveClasses/latest"); // Fetch latest meeting link
+                const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/liveClasses/latest`); // Fetch latest meeting link
                 const data = await response.json();
+                console.log("Meeting Link Data:", data.meetLink);
                 setMeetingLink(data.meetLink);
             } catch (error) {
                 console.error("❌ Error fetching meeting link:", error);

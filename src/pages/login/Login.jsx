@@ -29,7 +29,7 @@ const Login = ({ isOpen, closeLogin }) => {
     setErrorMessage([]);  // ✅ Reset errors before submitting
 
     try {
-      const { data } = await axios.post('http://localhost:5000/users/login', formData, {
+      const { data } = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/users/login`, formData, {
         withCredentials: true
       });
 

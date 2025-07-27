@@ -15,7 +15,7 @@ const ChemistryLiveClass = () => {
         }
 
         try {
-            const response = await axios.post("http://localhost:5000/liveClasses/class", { meetLink });
+            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/liveClasses/class`, { meetLink });
 
             console.log("Start Class Response:", response.data); // Debugging line
 
@@ -31,11 +31,10 @@ const ChemistryLiveClass = () => {
         }
     };
 
-
     // End Class (Resets Everything)
     const endClass = async () => {
         try {
-            const response = await axios.delete("http://localhost:5000/liveClasses/deleteClass", { meetLink });
+            const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/liveClasses/deleteClass`, { meetLink });
             console.log("End Class Response:", response.data); // Debugging line
             setClassStatus("Not Started");
             setMeetLink("");

@@ -26,7 +26,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/users/all-users", {
+                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/all-users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -48,7 +48,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchSessions = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/stats/sessions'); // 🔹 Backend API call
+                const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/stats/sessions`); // 🔹 Backend API call
                 setSessions(response.data.sessions);  // 🔹 Store in state
             } catch (error) {
                 console.error("Error fetching active sessions:", error);
@@ -69,7 +69,7 @@ const Dashboard = () => {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
 
         try {
-            await axios.delete(`http://localhost:5000/users/delete/${id}`, {
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/users/delete/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -84,7 +84,7 @@ const Dashboard = () => {
 
     const userLogoutHandler = () => {
         const token = localStorage.getItem('token');
-        axios.get("http://localhost:5000/users/logout", {
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/users/logout`, {
             withCredentials: true,
             headers: {
                 Authorization: `Bearer ${token}`

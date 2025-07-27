@@ -16,7 +16,7 @@ function RecordLectures() {
 
     useEffect(() => {
         try {
-            axios.get("http://localhost:5000/recordedLectures/allVideos")
+            axios.get(`${process.env.REACT_APP_BACKEND_URL}/recordedLectures/allVideos`)
                 .then((response) => {
                     setRecordedLectures(response.data);
                 });
